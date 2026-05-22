@@ -30,22 +30,9 @@ AI 驱动的微信自动回复助手。基于 LangChain + FastAPI，Qwen 驱动�
 - **上下文获取**：Claude 直接调用工具搜索聊天记录来理解项目背景
 - **信息汇总**："总结一下这个群今天讨论了什么" → Claude 搜消息后汇总
 
-### 参考：作为 Claude Code Skill 注册
+### 参考：作为 Claude Code Skill 使用
 
-可以参考 `tools/wechat_read.py` 中的实现，像配置 `wechat-cli` Skill 一样接入 Claude Code：
-
-```json
-{
-  "mcpServers": {
-    "wechat-reader": {
-      "command": "python",
-      "args": ["path/to/your/mcp_server.py"]
-    }
-  }
-}
-```
-
-也可以直接通过命令行让 Claude 调用：
+像你本地已经配置的 `wechat-cli` Skill 一样，把消息读取命令直接作为 Skill 注册：
 
 ```bash
 # 查某个人的聊天记录
@@ -53,9 +40,12 @@ wechat-cli search "" --chat "联系人" --start-time "2026-05-01" --limit 30
 
 # 查新消息
 wechat-cli new-messages
+
+# 搜索联系人
+wechat-cli contacts --query "姓名"
 ```
 
-核心就是一句命令的事——把 `wechat-cli search` 的结果喂给 Claude，它就能理解上下文。
+核心就是一句命令的事——把 `wechat-cli search` 的结果喂给 Claude，它就能理解上下文。你现有的 `wechat-cli` Skill 就是这么工作的。
 
 ## 快速开始
 
