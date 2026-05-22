@@ -1,6 +1,6 @@
-# WeChat Auto Agent v2
+# WeChat Auto Agent
 
-微信自动回复助手。基于 LangChain + FastAPI，Qwen 驱动，可自动读取微信消息、AI 生成回复、通过桌面微信发送。
+AI 驱动的微信自动回复助手。基于 LangChain + FastAPI，Qwen 驱动，自动读取微信消息、生成回复、通过桌面微信发送。
 
 ## 功能
 
