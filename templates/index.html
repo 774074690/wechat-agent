@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>微信自动回复 v2</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:-apple-system,sans-serif; background:#f5f5f5; color:#333; padding:20px; max-width:800px; margin:0 auto; }
+  h1 { font-size:22px; margin-bottom:20px; color:#07c160; }
+  .card { background:white; border-radius:12px; padding:20px; margin-bottom:16px; box-shadow:0 1px 3px rgba(0,0,0,.1); }
+  h2 { font-size:16px; margin-bottom:12px; }
+  label { display:block; font-size:14px; margin-bottom:4px; color:#666; }
+  textarea, select { width:100%; padding:10px 12px; border:1px solid #ddd; border-radius:8px; font-size:14px; }
+  textarea { height:80px; }
+  .btn { padding:10px 24px; border:none; border-radius:8px; font-size:14px; cursor:pointer; color:white; }
+  .btn-green { background:#07c160; }
+  .btn-red { background:#ff4d4f; }
+  .log-box { background:#1e1e1e; color:#ccc; padding:12px; border-radius:8px; font-size:12px; font-family:monospace; max-height:300px; overflow-y:auto; white-space:pre-wrap; }
+  .flex { display:flex; align-items:center; gap:12px; margin-top:12px; }
+  .status { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; }
+  .status.on { background:#07c160; }
+  .status.off { background:#ccc; }
+  .chat-box { display:flex; gap:8px; margin-top:12px; }
+  .chat-box input { flex:1; padding:10px 12px; border:1px solid #ddd; border-radius:8px; font-size:14px; }
+</style>
+</head>
+<body>
+<h1>🤖 微信自动回复 v2</h1>
+
+<div class="card">
+  <h2>运行状态</h2>
+  <div class="flex">
+    <span><span class="status {{'on' if running else 'off'}}"></span>{{'运行中' if running else '已停止'}}</span>
+    <button class="btn {{'btn-red' if running else 'btn-green'}}" onclick="toggleDaemon()">{{'停止' if running else '启动'}}</button>
+  </div>
+</div>
+
+<div class="card">
+  <h2>联系人配置</h2>
+  <label>自动回复的联系人（逗号分隔）</label>
+  <textarea id="contacts">{{contacts}}</textarea>
+  <div class="flex">
+    <button class="btn btn-green" onclick="saveContacts()">保存</button>
+    <span id="contactsMsg" class="info" style="font-size:13px;color:#999;"></span>
+  </div>
+</div>
+
+<div class="card">
+  <h2>发送方式</h2>
+  <select id="sendMethod" onchange="saveMethod()">
+    <option value="desktop" {{'selected' if send_method=='desktop'}}>💻 桌面微信</option>
+    <option value="phone" {{'selected' if send_method=='phone'}}>📱 手机发送</option>
+  </select>
+</div>
+
+<div class="card">
+  <h2>测试对话</h2>
+  <div class="chat-box">
+    <input id="chatInput" placeholder="输入消息测试回复..." onkeydown="if(event.key=='Enter') sendChat()">
+    <button class="btn btn-green" onclick="sendChat()">发送</button>
+  </div>
+  <div id="chatReply" style="margin-top:8px;font-size:14px;color:#666;"></div>
+</div>
+
+<div class="card">
+  <h2>日志</h2>
+  <div class="log-box" id="logs">{{logs}}</div>
+  <div class="flex">
+    <button class="btn btn-green" onclick="refreshLogs()">刷新</button>
+  </div>
+</div>
+
+<script>
+function toggleDaemon() {
+  fetch('/api/daemon/toggle', {method:'POST'}).then(r=>r.json()).then(()=>{ setTimeout(()=>location.reload(), 1000); });
+}
+function saveContacts() {
+  fetch('/api/contacts', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({contacts: document.getElementById('contacts').value})})
+    .then(r=>r.json()).then(d=>{ document.getElementById('contactsMsg').textContent = d.msg; });
+}
+function saveMethod() {
+  fetch('/api/send-method', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({method: document.getElementById('sendMethod').value})})
+    .then(r=>r.json()).then(d=>{});
+}
+function sendChat() {
+  const input = document.getElementById('chatInput');
+  const reply = document.getElementById('chatReply');
+  reply.textContent = '思考中...';
+  fetch('/api/chat', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({message: input.value})})
+    .then(r=>r.json()).then(d=>{ reply.textContent = '🤖 ' + d.reply; });
+}
+function refreshLogs() {
+  fetch('/api/logs').then(r=>r.json()).then(d=>{ document.getElementById('logs').textContent = d.logs; });
+}
+setInterval(() => {
+  fetch('/api/status').then(r=>r.json()).then(d=>{
+    const btn = document.querySelector('.card:first-child .btn');
+    const dot = document.querySelector('.status');
+    if (d.running) {
+      dot.className = 'status on';
+      btn.textContent = '停止';
+      btn.className = 'btn btn-red';
+    }
+  });
+}, 5000);
+</script>
+</body>
+</html>
